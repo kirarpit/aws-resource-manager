@@ -2,7 +2,23 @@
 
 abstract class AWS_Resources {
 
-	const VERSION = '';
+	public function check_tagging(){
+		foreach($this->resources as $region=>$resources){
+			foreach($resources as $resource){
+				if(!$this->is_tagged($resource, $region)){
+					$this->log_resource($resource, $region, 'untagged');
+				}
+			}
+		}
+	}
+
+	abstract public function is_tagged($resource, $region);
+
+	abstract public function log_resource($resource, $region, $remark);
+
+	//public function monitor_resources();
+
+	//public function examine_security();
 
 	public function check_resources(){
 		$functions = preg_grep("/check_/", get_class_methods(get_class($this)));
@@ -17,7 +33,7 @@ abstract class AWS_Resources {
 		return $result;
 	}
 
-	public function is_tagged($tags){
+	public function find_tag($tags){
 		foreach($tags as $tag){
 			if(!empty($tag['Key']) && $tag['Key'] == 'project'){
 				return true;
@@ -43,6 +59,10 @@ abstract class AWS_Resources {
 		}
 
 		return $remark;
+	}
+
+	public function get_log(){
+		return $this->log;
 	}
 }
 

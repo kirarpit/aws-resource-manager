@@ -13,6 +13,8 @@ class Rds_Resources extends AWS_Resources {
 	private $profile;
 	public $rdsClient;
 	public $regions = array();
+	public $resources = array();
+	public $log = array();
 
 	public function __construct($profile) {
 		$this->profile = $profile;
@@ -24,6 +26,7 @@ class Rds_Resources extends AWS_Resources {
 		]);
 
 		$this->get_regions();
+		$this->get_resources();
 	}
 
 	private function get_regions() {
@@ -35,9 +38,9 @@ class Rds_Resources extends AWS_Resources {
 		}
 	}
 
-	public function check_instances(){
+	public function get_resources(){
 
-		$all_instances = array();
+		$instances = array();
 		foreach($this->regions as $region){
 			$rdsClient = new RdsClient([
 					'region' => $region,
@@ -46,55 +49,40 @@ class Rds_Resources extends AWS_Resources {
 			]);
 			$result = $rdsClient->describeDBInstances();
 			foreach($result['DBInstances'] as $instance){
-				$instance_data = array();
-
-				$tags = $this->get_resource_tags($rdsClient, $instance['DBInstanceArn']);
-				if(!$this->is_tagged($tags)){
-					$instance_data['instance_id'] = $instance['DBInstanceIdentifier'];
-					$instance_data['instance_type'] = $instance['DBInstanceClass'];
-					$instance_data['region'] = $instance['AvailabilityZone'];
-					$instance_data['remark'] = $this->get_remark('untagged');
-				}
-
-				if(!empty($instance_data)){
-					$all_instances[] = $instance_data;
+				if(!empty($instance)){
+					$instances[$region][] = $instance;
 				}
 			}
 		}
 
-		return $all_instances;
+		$this->resources = $instances;
 	}
 
-	public function check_snapshots(){
-		return;
+	public function is_tagged($instance, $region){
 
-		$all_snapshots = array();
-		foreach($this->regions as $region){
-			$rdsClient = new RdsClient([
-					'region' => $region,
-					'version' => self::VERSION,
-					'profile' => $this->profile['name']
-			]);
-			$result = $rdsClient->describeDBSnapshots();
-			foreach($result['DBSnapshots'] as $snapshot){
-				$snapshot_data = array();
+		$rdsClient = new RdsClient([
+				'region' => $region,
+				'version' => self::VERSION,
+				'profile' => $this->profile['name']
+		]);
 
-				$tags = $this->get_resource_tags($rdsClient, $snapshot['DBSnapshotArn']);
-
-				if(!$this->is_tagged($tags)){
-					$snapshot_data['instance_id'] = $snapshot['DBInstanceIdentifier'];
-					$snapshot_data['snapshot_id'] = $snapshot['DBSnapshotIdentifier'];
-					$snapshot_data['region'] = $snapshot['AvailabilityZone'];
-					$snapshot_data['remark'] = $this->get_remark('untagged');
-				}
-
-				if(!empty($snapshot_data)){
-					$all_snapshots[] = $snapshot_data;
-				}
-			}
+		$tags = $this->get_resource_tags($rdsClient, $instance['DBInstanceArn']);
+		if(!$this->find_tag($tags)){
+			return false;
 		}
 
-		return $all_snapshots;
+		return true;
+	}
+
+	public function log_resource($instance, $region, $remark){
+		$instance_data = array();
+
+		$instance_data['instance_id'] = $instance['DBInstanceIdentifier'];
+		$instance_data['instance_type'] = $instance['DBInstanceClass'];
+		$instance_data['region'] = $instance['AvailabilityZone'];
+		$instance_data['remark'] = $this->get_remark($remark);
+
+		$this->log[] = $instance_data;
 	}
 
 	private function get_resource_tags($rdsClient, $resource_name){

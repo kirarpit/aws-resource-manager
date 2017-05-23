@@ -13,7 +13,8 @@ class S3_Resources extends AWS_Resources {
 
 	private $profile;
 	public $S3Client;
-	public $regions = array();
+	public $resources = array();
+	public $log = array();
 
 	public function __construct($profile) {
 		$this->profile = $profile;
@@ -23,41 +24,49 @@ class S3_Resources extends AWS_Resources {
 				'version' => self::VERSION,
 				'profile' => $profile['name']
 		]);
+
+		$this->get_resources();
 	}
 
-	public function check_buckets(){
+	public function get_resources(){
 
-		$all_buckets = array();
-		$S3Client= new S3Client([
-				'region' => 'us-west-2',
-				'version' => self::VERSION,
-				'profile' => $this->profile['name']
-		]);
-		$result = $S3Client->ListBuckets();
+		$buckets = array();
+		$result = $this->S3Client->ListBuckets();
 		foreach($result['Buckets'] as $bucket){
-			$bucket_data = array();
 
-			$region = $this->get_bucket_location($S3Client, $bucket['Name']);
+			$region = $this->get_bucket_location($this->S3Client, $bucket['Name']);
 			if(!empty($region)){
-				$tags = $this->get_bucket_tags($region, $bucket['Name']);
-
-				if(empty($tags) || !$this->is_tagged($tags)){
-					$bucket_data['bucket_name'] = $bucket['Name'];
-					$bucket_data['region'] = $region;
-					$bucket_data['remark'] = $this->get_remark('untagged');
-				}
-
-				if(!empty($bucket_data)){
-					$all_buckets[] = $bucket_data;
+				if(!empty($bucket)){
+					$buckets[$region][] = $bucket;
 				}
 			}
 		}
 
-		return $all_buckets;
+		$this->resources = $buckets;
+	}
+
+	public function is_tagged($bucket, $region){
+		$tags = $this->get_bucket_tags($region, $bucket['Name']);
+
+		if(empty($tags) || !$this->find_tag($tags)){
+			return false;
+		}
+
+		return true;
+	}
+
+	public function log_resource($bucket, $region, $remark){
+		$bucket_data = array();
+
+		$bucket_data['bucket_name'] = $bucket['Name'];
+		$bucket_data['region'] = $region;
+		$bucket_data['remark'] = $this->get_remark($remark);
+
+		$this->log[] = $bucket_data;
 	}
 
 	private function get_bucket_tags($region, $bucket_name){
-		$S3Client= new S3Client([
+		$S3Client = new S3Client([
 				'region' => $region,
 				'version' => self::VERSION,
 				'profile' => $this->profile['name']
@@ -68,7 +77,6 @@ class S3_Resources extends AWS_Resources {
 						'Bucket' => $bucket_name
 						));
 		} catch(AwsException $e) {
-			//echo $e->getMessage();
 			return false;
 		}
 
@@ -81,7 +89,6 @@ class S3_Resources extends AWS_Resources {
 						'Bucket' => $bucket_name
 						));
 		} catch(AwsException $e) {
-			//echo $e->getMessage();
 			return false;
 		}
 

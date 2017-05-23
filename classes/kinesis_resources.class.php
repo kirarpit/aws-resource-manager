@@ -13,6 +13,8 @@ class Kinesis_Resources extends AWS_Resources {
 	private $profile;
 	public $kinesisClient;
 	public $regions = array();
+	public $resources = array();
+	public $log = array();
 
 	public function __construct($profile) {
 		$this->profile = $profile;
@@ -24,11 +26,12 @@ class Kinesis_Resources extends AWS_Resources {
 		]);
 
 		$this->regions = array('us-east-2','us-east-1','us-west-1','us-west-2','ca-central-1','ap-south-1','ap-northeast-2','ap-southeast-1','ap-southeast-2','ap-northeast-1','eu-central-1','eu-west-1','eu-west-2','sa-east-1');
+		$this->get_resources();
 	}
 
-	public function check_streams(){
+	public function get_resources(){
 
-		$all_streams = array();
+		$streams = array();
 		foreach($this->regions as $region){
 			$kinesisClient = new KinesisClient([
 					'region' => $region,
@@ -37,23 +40,40 @@ class Kinesis_Resources extends AWS_Resources {
 			]);
 			$result = $kinesisClient->ListStreams();
 			foreach($result['StreamNames'] as $stream){
-				$stream_data = array();
-
-				$tags = $this->get_stream_tags($kinesisClient, $stream);
-
-				if(!$this->is_tagged($tags)){
-					$stream_data['stream_name'] = $stream;
-					$stream_data['region'] = $region;
-					$stream_data['remark'] = $this->get_remark('untagged');
-				}
-
-				if(!empty($stream_data)){
-					$all_streams[] = $stream_data;
+				if(!empty($stream)){
+					$streams[$region][] = $stream;
 				}
 			}
 		}
 
-		return $all_streams;
+		$this->resources = $streams;
+	}
+
+	public function is_tagged($stream, $region){
+
+		$kinesisClient = new KinesisClient([
+				'region' => $region,
+				'version' => self::VERSION,
+				'profile' => $this->profile['name']
+		]);
+
+		$tags = $this->get_stream_tags($kinesisClient, $stream);
+
+		if(!$this->find_tag($tags)){
+			return false;
+		}
+
+		return true;
+	}
+
+	public function log_resource($stream, $region, $remark){
+		$stream_data = array();
+
+		$stream_data['stream_name'] = $stream;
+		$stream_data['region'] = $region;
+		$stream_data['remark'] = $this->get_remark($remark);
+
+		$this->log[] = $stream_data;
 	}
 
 	public function get_stream_tags($kinesisClient, $stream_name){

@@ -14,6 +14,8 @@ class Lambda_Resources extends AWS_Resources {
 	private $profile;
 	public $LambdaClient;
 	public $regions = array();
+	public $resources = array();
+	public $log = array();
 
 	public function __construct($profile) {
 		$this->profile = $profile;
@@ -25,11 +27,12 @@ class Lambda_Resources extends AWS_Resources {
 		]);
 
 		$this->regions = array('us-east-2','us-east-1','us-west-1','us-west-2','ap-northeast-2','ap-south-1','ap-southeast-1','ap-southeast-2','ap-northeast-1','eu-central-1','eu-west-1','eu-west-2');
+		$this->get_resources();
 	}
 
-	public function check_functions(){
+	public function get_resources(){
 
-		$all_functions = array();
+		$functions = array();
 		foreach($this->regions as $region){
 			$LambdaClient= new LambdaClient([
 					'region' => $region,
@@ -38,24 +41,42 @@ class Lambda_Resources extends AWS_Resources {
 			]);
 			$result = $LambdaClient->listFunctions();
 			foreach($result['Functions'] as $function){
-				$function_data = array();
-
-				$tags = $this->get_function_tags($LambdaClient, $function['FunctionArn']);
-
-				if(empty($tags) || !$this->is_tagged($tags)){
-					$function_data['function_name'] = $function['FunctionName'];
-					$function_data['region'] = $region;
-					$function_data['remark'] = $this->get_remark('untagged');
-				}
-
-				if(!empty($function_data)){
-					$all_functions[] = $function_data;
+				if(!empty($function)){
+					$functions[$region][] = $function;
 				}
 			}
 		}
 
-		return $all_functions;
+		$this->resources = $functions;
 	}
+
+	public function is_tagged($function, $region){
+
+		$LambdaClient= new LambdaClient([
+				'region' => $region,
+				'version' => self::VERSION,
+				'profile' => $this->profile['name']
+		]);
+
+		$tags = $this->get_function_tags($LambdaClient, $function['FunctionArn']);
+
+		if(empty($tags) || !$this->find_tag($tags)){
+			return false;
+		}
+
+		return true;
+	}
+
+	public function log_resource($function, $region, $remark){
+		$function_data = array();
+
+		$function_data['function_name'] = $function['FunctionName'];
+		$function_data['region'] = $region;
+		$function_data['remark'] = $this->get_remark($remark);
+
+		$this->log[] = $function_data;
+	}
+
 
 	private function get_function_tags($LambdaClient, $function_name){
 
@@ -64,7 +85,6 @@ class Lambda_Resources extends AWS_Resources {
 						'Resource' => $function_name
 						));
 		} catch(AwsException $e) {
-			//echo $e->getMessage();
 			return false;
 		}
 

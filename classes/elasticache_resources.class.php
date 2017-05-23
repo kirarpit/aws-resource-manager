@@ -14,6 +14,8 @@ class Elasticache_Resources extends AWS_Resources {
 	private $profile;
 	public $ElastiCacheClient;
 	public $regions = array();
+	public $resources = array();
+	public $log = array();
 
 	public function __construct($profile) {
 		$this->profile = $profile;
@@ -25,11 +27,12 @@ class Elasticache_Resources extends AWS_Resources {
 		]);
 
 		$this->regions = array('us-east-2','us-east-1','us-west-1','us-west-2','ca-central-1','ap-south-1','ap-northeast-2','ap-southeast-1','ap-southeast-2','ap-northeast-1','eu-central-1','eu-west-1','eu-west-2','sa-east-1');
+		$this->get_resources();
 	}
 
-	public function check_clusters(){
+	public function get_resources(){
 
-		$all_clusters = array();
+		$clusters = array();
 		foreach($this->regions as $region){
 			$ElastiCacheClient= new ElastiCacheClient([
 					'region' => $region,
@@ -38,23 +41,40 @@ class Elasticache_Resources extends AWS_Resources {
 			]);
 			$result = $ElastiCacheClient->describeCacheClusters();
 			foreach($result['CacheClusters'] as $cluster){
-				$cluster_data = array();
-
-				$tags = $this->get_cluster_tags($ElastiCacheClient, $cluster['CacheClusterId'], $region);
-
-				if(empty($tags) || !$this->is_tagged($tags)){
-					$cluster_data['cluster_name'] = $cluster['CacheClusterId'];
-					$cluster_data['region'] = $region;
-					$cluster_data['remark'] = $this->get_remark('untagged');
-				}
-
-				if(!empty($cluster_data)){
-					$all_clusters[] = $cluster_data;
+				if(!empty($cluster)){
+					$clusters[$region][] = $cluster;
 				}
 			}
 		}
 
-		return $all_clusters;
+		$this->resources = $clusters;
+	}
+
+	public function is_tagged($cluster, $region){
+
+		$ElastiCacheClient= new ElastiCacheClient([
+				'region' => $region,
+				'version' => self::VERSION,
+				'profile' => $this->profile['name']
+		]);
+
+		$tags = $this->get_cluster_tags($ElastiCacheClient, $cluster['CacheClusterId'], $region);
+
+		if(empty($tags) || !$this->find_tag($tags)){
+			return false;
+		}
+
+		return true;
+	}
+
+	public function log_resource($cluster, $region, $remark){
+		$cluster_data = array();
+
+		$cluster_data['cluster_name'] = $cluster['CacheClusterId'];
+		$cluster_data['region'] = $region;
+		$cluster_data['remark'] = $this->get_remark($remark);
+
+		$this->log[] = $cluster_data;
 	}
 
 	private function get_cluster_tags($ElastiCacheClient, $cluster_name, $region){
