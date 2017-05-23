@@ -53,7 +53,7 @@ class Rds_Resources extends AWS_Resources {
 					$instance_data['instance_id'] = $instance['DBInstanceIdentifier'];
 					$instance_data['instance_type'] = $instance['DBInstanceClass'];
 					$instance_data['region'] = $instance['AvailabilityZone'];
-					$instance_data['remark'] = "'Project' Tag Not Found";
+					$instance_data['remark'] = $this->get_remark('untagged');
 				}
 
 				if(!empty($instance_data)){
@@ -66,6 +66,7 @@ class Rds_Resources extends AWS_Resources {
 	}
 
 	public function check_snapshots(){
+		return;
 
 		$all_snapshots = array();
 		foreach($this->regions as $region){
@@ -84,7 +85,7 @@ class Rds_Resources extends AWS_Resources {
 					$snapshot_data['instance_id'] = $snapshot['DBInstanceIdentifier'];
 					$snapshot_data['snapshot_id'] = $snapshot['DBSnapshotIdentifier'];
 					$snapshot_data['region'] = $snapshot['AvailabilityZone'];
-					$snapshot_data['remark'] = "'Project' Tag Not Found";
+					$snapshot_data['remark'] = $this->get_remark('untagged');
 				}
 
 				if(!empty($snapshot_data)){

@@ -44,7 +44,7 @@ class Kinesis_Resources extends AWS_Resources {
 				if(!$this->is_tagged($tags)){
 					$stream_data['stream_name'] = $stream;
 					$stream_data['region'] = $region;
-					$stream_data['remark'] = "'Project' Tag Not Found";
+					$stream_data['remark'] = $this->get_remark('untagged');
 				}
 
 				if(!empty($stream_data)){

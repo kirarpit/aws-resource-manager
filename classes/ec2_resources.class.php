@@ -54,7 +54,7 @@ class EC2_Resources extends AWS_Resources {
 							$instance_data['instance_id'] = $instance['InstanceId'];
 							$instance_data['instance_type'] = $instance['InstanceType'];
 							$instance_data['region'] = $instance['Placement']['AvailabilityZone'];
-							$instance_data['remark'] = "'Project' Tag Not Found";
+							$instance_data['remark'] = $this->get_remark('untagged');
 						}
 					}
 
@@ -86,13 +86,7 @@ class EC2_Resources extends AWS_Resources {
 					$all_volumes[] = $volume_data;
 				}
 
-				if(!empty($volume['Tags'])){
-					$tags = $volume['Tags'];
-					if(!$this->is_tagged($tags)){
-						$volume_data = $this->get_volume_data($volume, 'untagged');
-						$all_volumes[] = $volume_data;
-					}
-				}else{
+				if(false && (empty($volume['Tags']) || !$this->is_tagged($volume['Tags']))){
 					$volume_data = $this->get_volume_data($volume, 'untagged');
 					$all_volumes[] = $volume_data;
 				}
@@ -108,13 +102,7 @@ class EC2_Resources extends AWS_Resources {
 		$volume_data['region'] = $volume['AvailabilityZone'];
 		$volume_data['volume_type'] = $volume['VolumeType'];
 
-		if($reason == 'not-in-use'){
-			$remark = 'Resource is not in use';
-		}else if($reason == 'untagged'){
-			$remark = "'Project' Tag Not Found";
-		}
-
-		$volume_data['remark'] = $remark;
+		$volume_data['remark'] = $this->get_remark($reason);
 
 		return $volume_data;
 	}

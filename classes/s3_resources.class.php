@@ -44,7 +44,7 @@ class S3_Resources extends AWS_Resources {
 				if(empty($tags) || !$this->is_tagged($tags)){
 					$bucket_data['bucket_name'] = $bucket['Name'];
 					$bucket_data['region'] = $region;
-					$bucket_data['remark'] = "'Project' Tag Not Found";
+					$bucket_data['remark'] = $this->get_remark('untagged');
 				}
 
 				if(!empty($bucket_data)){

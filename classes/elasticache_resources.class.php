@@ -45,7 +45,7 @@ class Elasticache_Resources extends AWS_Resources {
 				if(empty($tags) || !$this->is_tagged($tags)){
 					$cluster_data['cluster_name'] = $cluster['CacheClusterId'];
 					$cluster_data['region'] = $region;
-					$cluster_data['remark'] = "'Project' Tag Not Found";
+					$cluster_data['remark'] = $this->get_remark('untagged');
 				}
 
 				if(!empty($cluster_data)){
@@ -58,7 +58,7 @@ class Elasticache_Resources extends AWS_Resources {
 	}
 
 	private function get_cluster_tags($ElastiCacheClient, $cluster_name, $region){
-		$resource_name = "arn:aws:elasticache:$region:317392809052:cluster:$cluster_name";
+		$resource_name = "arn:aws:elasticache:$region:".$this->profile['account_number'].":cluster:$cluster_name";
 
 		try {
 			$result = $ElastiCacheClient->ListTagsForResource(array(

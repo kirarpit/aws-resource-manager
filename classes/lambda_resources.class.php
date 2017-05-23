@@ -45,7 +45,7 @@ class Lambda_Resources extends AWS_Resources {
 				if(empty($tags) || !$this->is_tagged($tags)){
 					$function_data['function_name'] = $function['FunctionName'];
 					$function_data['region'] = $region;
-					$function_data['remark'] = "'Project' Tag Not Found";
+					$function_data['remark'] = $this->get_remark('untagged');
 				}
 
 				if(!empty($function_data)){
