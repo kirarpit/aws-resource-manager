@@ -33,10 +33,14 @@ abstract class AWS_Resources {
 
 	//public function examine_security();
 
-	public function find_tag($tags){
+	public function find_tag($tags, $key=''){
+		if(empty($key)){
+			$key = 'project';
+		}
+
 		foreach($tags as $tag){
-			if(!empty($tag['Key']) && $tag['Key'] == 'project'){
-				return true;
+			if(!empty($tag['Key']) && $tag['Key'] == $key){
+				return $tag['Value'];
 			}
 		}
 

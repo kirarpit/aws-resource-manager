@@ -107,7 +107,10 @@ class EC2_Instance_Resources extends AWS_Resources {
 	public function log_resource($instance, $region, $remark){
 		$instance_data = array();
 
+		$tags = $instance['Tags'];
+
 		$instance_data['instance_id'] = $instance['InstanceId'];
+		$instance_data['instance_name'] = $this->find_tag($tags, 'Name').' - '.$this->find_tag($tags, 'project');
 		$instance_data['instance_type'] = $instance['InstanceType'];
 		$instance_data['region'] = $instance['Placement']['AvailabilityZone'];
 		$instance_data['remark'] = $this->get_remark($remark);
