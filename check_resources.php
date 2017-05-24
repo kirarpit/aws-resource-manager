@@ -14,11 +14,18 @@ foreach($profiles as $profile){
 		include_once $filename;
 		$class = get_class_name($filename);
 		$object = new $class($profile);
-		$results[] = $object->check_resources();
+
+		$object->check_tagging();
+
+		$data = explode('_', $class);
+		array_pop($data);
+		$key = ucwords(implode(' ', $data));
+
+		$results[$key][] = $object->get_log();
 	}
 
-	foreach($results as $result){
-		foreach($result as $key=>$value){
+	foreach($results as $key=>$result){
+		foreach($result as $value){
 			if(!empty($value)){
 				$html .= generate_table($value, $key);
 			}
@@ -26,7 +33,8 @@ foreach($profiles as $profile){
 	}
 
 	$html = wordwrap($html, 75, "\n");
-	mail("arpit@mysmartprice.com, arun@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
+	mail("arpit@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
+	//mail("arpit@mysmartprice.com, arun@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
 }
 
 function generate_table($data, $caption){
