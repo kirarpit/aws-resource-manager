@@ -1,6 +1,13 @@
 <?php
+require_once 'classes/cloudwatch.class.php';
 
 abstract class AWS_Resources {
+
+	abstract public function is_tagged($resource, $region);
+
+	abstract public function log_resource($resource, $region, $remark);
+
+	abstract public function is_under_utilised($resource, $region);
 
 	public function check_tagging(){
 		foreach($this->resources as $region=>$resources){
@@ -12,26 +19,19 @@ abstract class AWS_Resources {
 		}
 	}
 
-	abstract public function is_tagged($resource, $region);
+	public function monitor_resources(){
+		foreach($this->resources as $region=>$resources){
+			foreach($resources as $resource){
+				$this->cloudWatch = new CloudWatch($this->profile, $region);
 
-	abstract public function log_resource($resource, $region, $remark);
-
-	//public function monitor_resources();
+				if($this->is_under_utilised($resource, $region)){
+					$this->log_resource($resource, $region, 'under-utilised');
+				}
+			}
+		}
+	}
 
 	//public function examine_security();
-
-	public function check_resources(){
-		$functions = preg_grep("/check_/", get_class_methods(get_class($this)));
-		$functions = array_diff($functions, array('check_resources'));
-
-		$result = array();
-		foreach($functions as $function){
-			$key = ucwords(array_shift(explode('_', get_class($this)))." ".array_pop(explode('_', $function)));
-			$result[$key] = $this->$function();
-		}
-
-		return $result;
-	}
 
 	public function find_tag($tags){
 		foreach($tags as $tag){
@@ -51,6 +51,10 @@ abstract class AWS_Resources {
 
 			case 'untagged':
 				$remark = "'project' tag not found";
+				break;
+
+			case 'under-utilised':
+				$remark = "resource is under utilised";
 				break;
 
 			case 'default':

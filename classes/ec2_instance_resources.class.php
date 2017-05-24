@@ -10,7 +10,7 @@ class EC2_Instance_Resources extends AWS_Resources {
 
 	const VERSION = '2016-11-15';
 
-	private $profile;
+	public $profile;
 	public $ec2Client;
 	public $regions = array();
 	public $resources = array();
@@ -68,6 +68,40 @@ class EC2_Instance_Resources extends AWS_Resources {
 		}
 
 		return true;
+	}
+
+	public function is_under_utilised($instance, $region){
+		$namespace = 'AWS/EC2';
+
+		$dimensions = array(array(
+					'Name' => 'InstanceId',
+					'Value' => $instance['InstanceId'],
+				     ));
+
+		if(!empty($instance['State']['Name']) && $instance['State']['Name'] == 'running'){
+			$launch_time = strtotime($instance['LaunchTime']);
+			if($launch_time > strtotime('-2 day')){
+				return false;
+			}
+
+			$network_in_stats = $this->cloudWatch->get_network_in_stats($namespace, $dimensions);
+			$network_in = max(array_column($network_in_stats['Datapoints'], 'Maximum'));
+
+			$network_out_stats = $this->cloudWatch->get_network_out_stats($namespace, $dimensions);
+			$network_out = max(array_column($network_out_stats['Datapoints'], 'Maximum'));
+
+			$cpu_utilisation = $this->cloudWatch->get_cpu_utilisation_stats($namespace, $dimensions);
+			$cpu_utilisation = max(array_column($cpu_utilisation['Datapoints'], 'Maximum'));
+
+			$networkIO = (int)(($network_in + $network_out)/1000000);
+
+			//echo "%$cpu_utilisation & MB$networkIO & instance_id:{$instance['InstanceId']}".PHP_EOL;
+			if($cpu_utilisation < 40 && $networkIO < 10){
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function log_resource($instance, $region, $remark){
