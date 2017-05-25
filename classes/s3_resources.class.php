@@ -11,7 +11,7 @@ class S3_Resources extends AWS_Resources {
 
 	const VERSION = '2006-03-01';
 
-	private $profile;
+	public $profile;
 	public $S3Client;
 	public $resources = array();
 	public $log = array();
@@ -53,6 +53,9 @@ class S3_Resources extends AWS_Resources {
 		}
 
 		return true;
+	}
+
+	public function is_under_utilised($instance, $region){
 	}
 
 	public function log_resource($bucket, $region, $remark){

@@ -10,7 +10,7 @@ class Rds_Resources extends AWS_Resources {
 
 	const VERSION = '2014-10-31';
 
-	private $profile;
+	public $profile;
 	public $rdsClient;
 	public $regions = array();
 	public $resources = array();
@@ -67,11 +67,42 @@ class Rds_Resources extends AWS_Resources {
 		]);
 
 		$tags = $this->get_resource_tags($rdsClient, $instance['DBInstanceArn']);
-		if(!$this->find_tag($tags)){
-			return false;
+		if(!empty($instance['DBInstanceStatus']) && $instance['DBInstanceStatus'] == 'available'){
+			if(!$this->find_tag($tags)){
+				return false;
+			}
 		}
 
 		return true;
+	}
+
+	public function is_under_utilised($instance, $region){
+		$namespace = 'AWS/RDS';
+
+		$dimensions = array(array(
+					'Name' => 'DBInstanceIdentifier',
+					'Value' => $instance['DBInstanceIdentifier'],
+				     ));
+
+		if(!empty($instance['DBInstanceStatus']) && $instance['DBInstanceStatus'] == 'available'){
+			$launch_time = strtotime($instance['InstanceCreateTime']);
+			if($launch_time > strtotime('-2 day')){
+				return false;
+			}
+
+			$free_memory_stats = $this->cloudWatch->get_free_memory_stats($namespace, $dimensions);
+			$free_memory = max(array_column($free_memory_stats['Datapoints'], 'Maximum'))/1000000;
+
+			$cpu_utilisation = $this->cloudWatch->get_cpu_utilisation_stats($namespace, $dimensions);
+			$cpu_utilisation = max(array_column($cpu_utilisation['Datapoints'], 'Maximum'));
+
+			//echo "%$cpu_utilisation & MB$free_memory & instance_id:{$instance['DBInstanceIdentifier']}".PHP_EOL;
+			if($cpu_utilisation < 40 && $free_memory < 10){
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function log_resource($instance, $region, $remark){

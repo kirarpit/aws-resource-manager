@@ -16,6 +16,7 @@ foreach($profiles as $profile){
 		$object = new $class($profile);
 
 		$object->check_tagging();
+		$object->check_under_utilisation();
 
 		$data = explode('_', $class);
 		array_pop($data);

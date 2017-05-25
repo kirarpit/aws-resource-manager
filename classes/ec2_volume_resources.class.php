@@ -10,7 +10,7 @@ class EC2_Volume_Resources extends AWS_Resources {
 
 	const VERSION = '2016-11-15';
 
-	private $profile;
+	public $profile;
 	public $ec2Client;
 	public $regions = array();
 	public $resources = array();
@@ -63,6 +63,41 @@ class EC2_Volume_Resources extends AWS_Resources {
 		}
 
 		return true;
+	}
+
+	public function is_under_utilised($volume, $region){
+		$namespace = 'AWS/EBS';
+
+		$dimensions = array(array(
+					'Name' => 'VolumeId',
+					'Value' => $volume['VolumeId'],
+				     ));
+
+		if(!empty($volume['State']) && $volume['State'] == 'available'){
+			return true;
+
+		}else if(!empty($volume['State']) && $volume['State'] == 'in-use'){
+
+			$launch_time = strtotime($volume['CreateTime']);
+			if($launch_time > strtotime('-2 day')){
+				return false;
+			}
+
+			$volume_read_stats = $this->cloudWatch->get_volume_read_stats($namespace, $dimensions);
+			$volume_read = max(array_column($volume_read_stats['Datapoints'], 'Maximum'));
+
+			$volume_write_stats = $this->cloudWatch->get_volume_write_stats($namespace, $dimensions);
+			$volume_write = max(array_column($volume_write_stats['Datapoints'], 'Maximum'));
+
+			$volumeIOps = (int)($volume_read + $volume_write);
+
+			//echo "$volumeIOps - volume_id:{$volume['VolumeId']}".PHP_EOL;
+			if($volumeIOps < 1){
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function log_resource($volume, $region, $remark){

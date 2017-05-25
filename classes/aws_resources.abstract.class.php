@@ -19,7 +19,7 @@ abstract class AWS_Resources {
 		}
 	}
 
-	public function monitor_resources(){
+	public function check_under_utilisation(){
 		foreach($this->resources as $region=>$resources){
 			foreach($resources as $resource){
 				$this->cloudWatch = new CloudWatch($this->profile, $region);

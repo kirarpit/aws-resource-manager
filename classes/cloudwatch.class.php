@@ -93,4 +93,52 @@ class CloudWatch {
 
 		return $this->get_result();
 	}
+
+	public function get_volume_read_stats($namespace, $dimensions, $statistics, $start_time, $end_time, $period){
+
+		$this->set_metric_params($namespace, $dimensions, $statistics, $start_time, $end_time, $period);
+		$this->metric = 'VolumeReadOps';
+
+		return $this->get_result();
+	}
+
+	public function get_volume_write_stats($namespace, $dimensions, $statistics, $start_time, $end_time, $period){
+
+		$this->set_metric_params($namespace, $dimensions, $statistics, $start_time, $end_time, $period);
+		$this->metric = 'VolumeWriteOps';
+
+		return $this->get_result();
+	}
+
+	public function get_incoming_bytes_stats($namespace, $dimensions, $statistics, $start_time, $end_time, $period){
+
+		$this->set_metric_params($namespace, $dimensions, $statistics, $start_time, $end_time, $period);
+		$this->metric = 'IncomingBytes';
+
+		return $this->get_result();
+	}
+
+	public function get_put_records_stats($namespace, $dimensions, $statistics, $start_time, $end_time, $period){
+
+		$this->set_metric_params($namespace, $dimensions, $statistics, $start_time, $end_time, $period);
+		$this->metric = 'PutRecords.Bytes';
+
+		return $this->get_result();
+	}
+
+	public function get_get_records_stats($namespace, $dimensions, $statistics, $start_time, $end_time, $period){
+
+		$this->set_metric_params($namespace, $dimensions, $statistics, $start_time, $end_time, $period);
+		$this->metric = 'GetRecords.Bytes';
+
+		return $this->get_result();
+	}
+
+	public function get_free_memory_stats($namespace, $dimensions, $statistics, $start_time, $end_time, $period){
+
+		$this->set_metric_params($namespace, $dimensions, $statistics, $start_time, $end_time, $period);
+		$this->metric = 'FreeableMemory';
+
+		return $this->get_result();
+	}
 }

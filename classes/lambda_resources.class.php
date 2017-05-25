@@ -67,6 +67,10 @@ class Lambda_Resources extends AWS_Resources {
 		return true;
 	}
 
+	public function is_under_utilised($instance, $region){
+		return false;
+	}
+
 	public function log_resource($function, $region, $remark){
 		$function_data = array();
 
