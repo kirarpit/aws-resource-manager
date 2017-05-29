@@ -11,7 +11,7 @@ class Lambda_Resources extends AWS_Resources {
 
 	const VERSION = '2015-03-31';
 
-	private $profile;
+	public $profile;
 	public $LambdaClient;
 	public $regions = array();
 	public $resources = array();

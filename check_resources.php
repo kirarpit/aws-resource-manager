@@ -7,7 +7,7 @@ foreach($profiles as $profile){
 	$results = array();
 
 	foreach (glob("classes/*.class.php") as $filename){
-		if(preg_match('/abstract/', $filename)){
+		if(preg_match('/abstract/', $filename) || preg_match('/cloudwatch\.class/', $filename)){
 			continue;
 		}
 
@@ -15,14 +15,16 @@ foreach($profiles as $profile){
 		$class = get_class_name($filename);
 		$object = new $class($profile);
 
-		$object->check_tagging();
-		$object->check_under_utilisation();
+		if(get_parent_class($object) == 'AWS_Resources'){
+			$object->check_tagging();
+			$object->check_under_utilisation();
 
-		$data = explode('_', $class);
-		array_pop($data);
-		$key = ucwords(implode(' ', $data));
+			$data = explode('_', $class);
+			array_pop($data);
+			$key = ucwords(implode(' ', $data));
 
-		$results[$key][] = $object->get_log();
+			$results[$key][] = $object->get_log();
+		}
 	}
 
 	foreach($results as $key=>$result){

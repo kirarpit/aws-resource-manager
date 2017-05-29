@@ -11,7 +11,7 @@ class Elasticache_Resources extends AWS_Resources {
 
 	const VERSION = '2015-02-02';
 
-	private $profile;
+	public $profile;
 	public $ElastiCacheClient;
 	public $regions = array();
 	public $resources = array();
@@ -48,6 +48,10 @@ class Elasticache_Resources extends AWS_Resources {
 		}
 
 		$this->resources = $clusters;
+	}
+
+	public function is_under_utilised($instance, $region){
+		return false;
 	}
 
 	public function is_tagged($cluster, $region){
