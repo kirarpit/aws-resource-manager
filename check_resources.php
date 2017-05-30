@@ -36,8 +36,8 @@ foreach($profiles as $profile){
 	}
 
 	$html = wordwrap($html, 75, "\n");
-	mail("arpit@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
-	//mail("arpit@mysmartprice.com, arun@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
+	//mail("arpit@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
+	mail("arpit@mysmartprice.com, arun@mysmartprice.com", "AWS Resources - {$profile['display_name']}", $html, 'Content-Type: text/html');
 }
 
 function generate_table($data, $caption){
