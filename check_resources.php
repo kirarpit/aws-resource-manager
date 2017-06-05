@@ -1,12 +1,12 @@
 <?php
-require_once 'aws_utility.php';
 error_reporting(E_ERROR); ini_set('display_errors', 1);
+require_once 'aws_utility.php';
 
 foreach($profiles as $profile){
 	$html = '';
 	$results = array();
 
-	foreach (glob("classes/*.class.php") as $filename){
+	foreach (glob("/var/www/cloudwatch/classes/*.class.php") as $filename){
 		if(preg_match('/abstract/', $filename) || preg_match('/cloudwatch\.class/', $filename)){
 			continue;
 		}
